@@ -1,1 +1,17 @@
 💡Commands💡
+!
+spanning-tree mode pvst
+spanning-tree extend system-id
+spanning-tree vlan 30 priority 24576
+spanning-tree vlan 20 priority 28672
+!
+!
+interface FastEthernet0/11
+switchport mode trunk
+!
+interface FastEthernet0/12
+switchport mode trunk
+!
+interface FastEthernet0/15
+switchport mode trunk
+!

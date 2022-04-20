@@ -1,0 +1,147 @@
+💡Commands💡
+
+!
+ip dhcp excluded-address 10.0.6.1
+ip dhcp excluded-address 10.1.6.1
+ip dhcp excluded-address 10.2.6.1
+!
+!
+ip dhcp pool VLAN10
+network 10.0.6.0 255.255.255.0
+default-router 10.0.6.1
+option 150 ip 10.0.6.1
+dns-server 8.8.8.8
+ip dhcp pool VLAN20
+network 10.1.6.0 255.255.255.0
+default-router 10.1.6.1
+option 150 ip 10.1.6.1
+dns-server 8.8.8.8
+ip dhcp pool VLAN30
+network 10.2.6.0 255.255.255.0
+default-router 10.2.6.1
+option 150 ip 10.2.6.1
+dns-server 8.8.8.8
+!
+!
+crypto isakmp policy 10
+encr aes 256
+authentication pre-share
+group 5
+lifetime 3600
+!
+crypto isakmp policy 20
+encr aes 256
+authentication pre-share
+group 5
+lifetime 3600
+!
+crypto isakmp key Passw0rd address 1.6.0.2
+crypto isakmp key Passw0rd address 2.6.0.2
+!
+crypto ipsec transform-set TRANS ah-sha-hmac esp-aes 256 esp-sha-hmac
+crypto ipsec transform-set TRANS2 ah-sha-hmac esp-aes 256 esp-sha-hmac
+!
+!
+crypto map OMAPA 10 ipsec-isakmp 
+set peer 1.6.0.2
+set transform-set TRANS 
+match address 100
+!
+crypto map MAPA 10 ipsec-isakmp 
+set peer 2.6.0.2
+set transform-set TRANS2 
+match address 101
+!
+!
+interface Tunnel100
+ip address 192.168.6.1 255.255.255.252
+mtu 1476
+tunnel source Serial0/0/0
+tunnel destination 1.6.0.2
+!
+!
+interface Tunnel200
+ip address 192.168.6.5 255.255.255.252
+mtu 1476
+tunnel source Serial0/0/1
+tunnel destination 2.6.0.2
+!
+!
+interface g0/0.10
+encapsulation dot1Q 10
+ip address 10.0.6.1 255.255.255.0
+ip nat inside
+!
+interface g0/0.20
+encapsulation dot1Q 20
+ip address 10.1.6.1 255.255.255.0
+ip nat inside
+!
+interface g0/0.30
+encapsulation dot1Q 30
+ip address 10.2.6.1 255.255.255.0
+ip nat inside
+!
+
+interface Serial0/0/0
+ip address 1.6.0.1 255.255.255.252
+clock rate 2000000
+crypto map OMAPA
+!
+interface Serial0/0/1
+ip address 2.6.0.1 255.255.255.252
+clock rate 2000000
+crypto map MAPA
+!
+!
+router eigrp 100
+redistribute static 
+passive-interface g0/0
+passive-interface g0/1
+network 10.0.6.0 0.0.0.255
+network 10.1.6.0 0.0.0.255
+network 10.2.6.0 0.0.0.255
+network 192.168.6.0 0.0.0.3
+no auto-summary
+!
+router eigrp 200
+redistribute static 
+passive-interface g0/0
+passive-interface g0/1
+network 10.0.6.0 0.0.0.255
+network 10.1.6.0 0.0.0.255
+network 10.2.6.0 0.0.0.255
+network 192.168.6.4 0.0.0.3
+no auto-summary
+!
+ip route 0.0.0.0 0.0.0.0 1.6.0.2 
+ip route 0.0.0.0 0.0.0.0 2.6.0.2 
+!
+!
+access-list 1 permit 10.0.6.0 0.0.0.255
+access-list 1 permit 10.1.6.0 0.0.0.255
+access-list 1 permit 10.2.6.0 0.0.0.255
+access-list 1 permit 172.16.0.0 0.15.255.255
+access-list 1 permit 192.168.0.0 0.0.255.255
+access-list 100 permit gre host 1.6.0.1 host 1.6.0.2
+access-list 101 permit gre host 2.6.0.1 host 2.6.0.2
+!
+!
+telephony-service
+max-ephones 10
+max-dn 10
+ip source-address 10.1.6.1 port 2000
+auto assign 1 to 10
+!
+ephone-dn 1
+number 100
+!
+ephone-dn 2
+number 101
+!
+ephone-dn 3
+number 102
+
+line con 0 
+logg syn 
+exec-timeout 0 0
